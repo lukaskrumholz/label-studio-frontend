@@ -176,14 +176,11 @@ const Model = types
     },
 
     onHotKey() {
-      console.log(self);
-      console.log(self._ref);
       if (self._ref) {
         self._ref.focus();
       }
       else {
         const region = document.getElementsByClassName( self.name + "-completed")[0];
-        console.log(region);
         if (region) region.querySelector(".ant-typography").click();
       }
 

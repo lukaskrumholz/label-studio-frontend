@@ -217,7 +217,6 @@ export default types
           const c = self.completionStore.selected;
           if (c && c.highlightedNode) {
             const inputName = c.highlightedNode.parent.name;
-            console.log(inputName);
             c.highlightedNode.deleteRegion();
             const input = document.getElementsByClassName(inputName)[0];
             input.focus();

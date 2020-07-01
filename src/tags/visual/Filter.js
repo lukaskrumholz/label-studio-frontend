@@ -106,8 +106,6 @@ const Model = types
     },
 
     focusNextInput() {
-      console.log("HI");
-      console.log(self.nextinput);
       if (self.nextinput){
         document.getElementsByClassName(self.nextinput)[0].focus()
       }
