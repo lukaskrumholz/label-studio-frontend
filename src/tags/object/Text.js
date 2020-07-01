@@ -1,7 +1,7 @@
 import * as xpath from "xpath-range";
 import React, { Component } from "react";
 import { observer, inject } from "mobx-react";
-import { types, getType, getRoot } from "mobx-state-tree";
+import { types, getRoot } from "mobx-state-tree";
 
 import ObjectBase from "./Base";
 import ObjectTag from "../../components/Tags/Object";
@@ -27,7 +27,7 @@ import InfoModal from "../../components/Infomodal/Infomodal";
  * @param {string} [highlightColor]          - hex string with highlight color, if not provided uses the labels color
  * @param {symbol|word} [granularity=symbol] - control per symbol or word selection
  * @param {boolean} [showLabels=true]        - show labels next to the region
- * @param {string} [encoding=string|base64]  - decode value from a plain or base64 encoded string
+ * @param {string} [encoding=none|base64|base64unicode]  - decode value from encoded string
  */
 const TagAttrs = types.model("TextModel", {
   name: types.maybeNull(types.string),
@@ -46,7 +46,8 @@ const TagAttrs = types.model("TextModel", {
   showlabels: types.optional(types.boolean, true),
 
   granularity: types.optional(types.enumeration(["symbol", "word", "sentence", "paragraph"]), "symbol"),
-  encoding: types.optional(types.string, "string"),
+
+  encoding: types.optional(types.enumeration(["none", "base64", "base64unicode"]), "none"),
 });
 
 const Model = types
@@ -114,6 +115,8 @@ const Model = types
     loadedValue(val) {
       self.loaded = true;
       if (self.encoding === "base64") val = atob(val);
+      if (self.encoding === "base64unicode") val = Utils.Checkers.atobUnicode(val);
+
       self._value = val;
 
       self._regionsCache.forEach(({ region, completion }) => {
@@ -154,7 +157,7 @@ const Model = types
     },
 
     addRegion(range) {
-      const states = self.activeStates();
+      const states = self.getAvailableStates();
       if (states.length === 0) return;
 
       const clonedStates = states.map(s => cloneNode(s));
@@ -186,10 +189,13 @@ const Model = types
         m = restoreNewsnapshot(fromModel);
         // m.fromStateJSON(obj);
 
-        if (!r) {
+        if (r && fromModel.perregion) {
+          r.states.push(m);
+        } else {
           // tree.states = [m];
           const data = {
             pid: obj.id,
+            parentID: obj.parent_id === null ? "" : obj.parent_id,
             startOffset: start,
             endOffset: end,
             start: "",
@@ -203,8 +209,6 @@ const Model = types
 
           r = self.createRegion(data);
           // r = self.addRegion(tree);
-        } else {
-          r.states.push(m);
         }
       }
 
@@ -242,6 +246,7 @@ class TextPieceView extends Component {
 
     let val = runTemplate(item.value, store.task.dataObj);
     if (item.encoding === "base64") val = atob(val);
+    if (item.encoding === "base64unicode") val = Utils.Checkers.atobUnicode(val);
 
     return val;
   }
@@ -290,7 +295,7 @@ class TextPieceView extends Component {
 
       if (idx > 0) {
         const { node, len } = Utils.HTML.findIdxContainer(this.myRef, idx + 1);
-        r2.setEnd(node, len - 1);
+        r2.setEnd(node, len > 0 ? len - 1 : 0);
       }
     }
 
@@ -335,13 +340,21 @@ class TextPieceView extends Component {
 
       r = this.alignRange(r);
 
+      if (r.collapsed || /^\s*$/.test(r.toString())) continue;
+
       try {
         var normedRange = xpath.fromRange(r, self.myRef);
 
         splitBoundaries(r);
 
         normedRange._range = r;
-        normedRange.text = selection.toString();
+
+        // Range toString() uses only text nodes content
+        // so to extract original new lines made into <br>s we should get all the tags
+        const tags = Array.from(r.cloneContents().childNodes);
+        // and convert every <br> back to new line
+        const text = tags.reduce((str, node) => (str += node.tagName === "BR" ? "\n" : node.textContent), "");
+        normedRange.text = text;
 
         const ss = Utils.HTML.toGlobalOffset(self.myRef, r.startContainer, r.startOffset);
         const ee = Utils.HTML.toGlobalOffset(self.myRef, r.endContainer, r.endOffset);
@@ -373,20 +386,22 @@ class TextPieceView extends Component {
 
   onMouseUp(ev) {
     const item = this.props.item;
-
     if (!item.selectionenabled) return;
 
-    var selectedRanges = this.captureDocumentSelection();
-
     const states = item.activeStates();
+    if (!states || states.length === 0) return;
 
-    if (!states || states.length === 0 || selectedRanges.length === 0) return;
+    var selectedRanges = this.captureDocumentSelection();
+    if (selectedRanges.length === 0) return;
 
-    ev.nativeEvent.doSelection = true;
+    // prevent overlapping spans from being selected right after this
+    item._currentSpan = null;
 
     const htxRange = item.addRegion(selectedRanges[0]);
-    const spans = htxRange.createSpans();
-    htxRange.addEventsToSpans(spans);
+    if (htxRange) {
+      const spans = htxRange.createSpans();
+      htxRange.addEventsToSpans(spans);
+    }
   }
 
   _handleUpdate() {
@@ -449,11 +464,15 @@ class TextPieceView extends Component {
   }
 
   render() {
-    const { item, store } = this.props;
+    const { item } = this.props;
 
     if (!item.loaded) return null;
 
-    const val = item._value.split("\n").join("<br/>");
+    const val = item._value.split("\n").reduce((res, s, i) => {
+      if (i) res.push(<br key={i} />);
+      res.push(s);
+      return res;
+    }, []);
 
     return (
       <ObjectTag item={item}>
@@ -464,11 +483,10 @@ class TextPieceView extends Component {
           }}
           className={styles.block + " htx-text"}
           data-update={item._update}
-          style={{ overflow: "auto" }}
           onMouseUp={this.onMouseUp.bind(this)}
-          //onClick={this.onClick.bind(this)}
-          dangerouslySetInnerHTML={{ __html: val }}
-        />
+        >
+          {val}
+        </div>
       </ObjectTag>
     );
   }

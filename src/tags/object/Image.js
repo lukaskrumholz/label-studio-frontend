@@ -163,7 +163,7 @@ const Model = types
     /**
      * @return {object}
      */
-    completion() {
+    get completion() {
       // return Types.getParentOfTypeString(self, "Completion");
       return getRoot(self).completionStore.selected;
     },
@@ -172,7 +172,12 @@ const Model = types
      * @return {object}
      */
     states() {
-      return self.completion().toNames.get(self.name);
+      return self.completion.toNames.get(self.name);
+    },
+
+    activeStates() {
+      const states = self.states();
+      return states && states.filter(s => s.isSelected && s._type.includes("labels"));
     },
 
     controlButton() {
@@ -202,8 +207,6 @@ const Model = types
 
   // actions for the tools
   .actions(self => {
-    // tools
-    let tools = {};
     const toolsManager = new ToolsManager({ obj: self });
 
     function afterCreate() {
@@ -217,19 +220,11 @@ const Model = types
       if (self.rotatecontrol) toolsManager.addTool("rotate", Tools.Rotate.create({}, { manager: toolsManager }));
     }
 
-    function getTools() {
-      return Object.values(tools);
-    }
-
     function getToolsManager() {
       return toolsManager;
     }
 
-    function beforeDestroy() {
-      tools = null;
-    }
-
-    return { afterCreate, beforeDestroy, getTools, getToolsManager };
+    return { afterCreate, getToolsManager };
   })
 
   .actions(self => ({
@@ -307,20 +302,32 @@ const Model = types
       self.selectedShape = shape;
     },
 
-    rotate(degree = 90) {
-      self.rotation = self.rotation + degree;
+    rotate(degree = -90) {
+      self.rotation = (self.rotation + degree + 360) % 360;
 
-      if (self.rotation === 360) {
-        self.rotation = 0;
-        degree = 0;
-      }
+      // 1. swap canvas sizes to correct relative calculations
+      const w = self.stageWidth;
+      self.stageWidth = self.stageHeight;
+      self.stageHeight = w;
+      const nw = self.naturalWidth;
+      self.naturalWidth = self.naturalHeight;
+      self.naturalHeight = nw;
 
+      const ratio = self.stageHeight / self.stageWidth;
+
+      // 2. rotate regions
       self.regions.forEach(s => s.rotate(degree));
+
+      // 3. scale to fit original width and resize all regions
+      self._updateImageSize({
+        width: w,
+        height: Math.round(ratio * w),
+        naturalWidth: self.naturalWidth,
+        naturalHeight: self.naturalHeight,
+      });
     },
 
-    updateImageSize(ev) {
-      const { width, height, naturalWidth, naturalHeight, userResize } = ev.target;
-
+    _updateImageSize({ width, height, naturalWidth, naturalHeight, userResize }) {
       if (naturalWidth !== undefined) {
         self.naturalWidth = naturalWidth;
         self.naturalHeight = naturalHeight;
@@ -335,21 +342,38 @@ const Model = types
       });
     },
 
+    updateImageSize(ev) {
+      const { width, height, naturalWidth, naturalHeight } = ev.target;
+      if ((self.rotation + 360) % 180 === 90) {
+        // swap sizes
+        self._updateImageSize({
+          width: height,
+          height: width,
+          naturalWidth: naturalHeight,
+          naturalHeight: naturalWidth,
+        });
+      } else {
+        self._updateImageSize({ width, height, naturalWidth, naturalHeight });
+      }
+    },
+
+    checkLabels() {
+      // there is should be at least one state selected for *labels object
+      const labelStates = (self.states() || []).filter(s => s.type.includes("labels"));
+      const selectedStates = self.getAvailableStates();
+      return selectedStates.length !== 0 || labelStates.length === 0;
+    },
+
     addShape(shape) {
       self.regions.push(shape);
 
-      self.completion().addRegion(shape);
+      self.completion.addRegion(shape);
       self.setSelected(shape.id);
       shape.selectRegion();
     },
 
-    getEvCoords(ev) {
-      if (!ev.evt) return [];
-
-      const x = (ev.evt.offsetX - self.zoomingPositionX) / self.zoomScale;
-      const y = (ev.evt.offsetY - self.zoomingPositionY) / self.zoomScale;
-
-      return [x, y];
+    fixZoomedCoords([x, y]) {
+      return [(x - self.zoomingPositionX) / self.zoomScale, (y - self.zoomingPositionY) / self.zoomScale];
     },
 
     /**
@@ -358,30 +382,11 @@ const Model = types
      * @param {*} height
      */
     onResize(width, height, userResize) {
-      self.stageHeight = height;
-      self.stageWidth = width;
-      self.updateImageSize({
-        target: { width: width, height: height, userResize: userResize },
-      });
+      self._updateImageSize({ width, height, userResize });
     },
 
-    onImageClick(ev) {
-      const coords = self.getEvCoords(ev);
-      self.getToolsManager().event("click", ev, ...coords);
-    },
-
-    onMouseDown(ev) {
-      const coords = self.getEvCoords(ev);
-      self.getToolsManager().event("mousedown", ev, ...coords);
-    },
-
-    onMouseMove(ev) {
-      const coords = self.getEvCoords(ev);
-      self.getToolsManager().event("mousemove", ev, ...coords);
-    },
-
-    onMouseUp(ev) {
-      self.getToolsManager().event("mouseup", ev);
+    event(name, ev, ...coords) {
+      self.getToolsManager().event(name, ev.evt || ev, ...self.fixZoomedCoords(coords));
     },
 
     /**
@@ -392,10 +397,7 @@ const Model = types
 
       // when there is only the image classification and nothing else, we need to handle it here
       if (tools.length === 0 && obj.value.choices) {
-        self
-          .completion()
-          .names.get(obj.from_name)
-          .fromStateJSON(obj);
+        self.completion.names.get(obj.from_name).fromStateJSON(obj);
 
         return;
       }

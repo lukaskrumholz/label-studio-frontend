@@ -16,6 +16,10 @@ import { guidGenerator } from "../core/Helpers";
 const Completion = types
   .model("Completion", {
     id: types.identifier,
+    // @todo this value used `guidGenerator(5)` as default value before
+    // @todo but it calculates once, so all the completions have the same pk
+    // @todo why don't use only `id`?
+    // @todo reverted back to wrong type; maybe it breaks all the deserialisation
     pk: types.optional(types.string, guidGenerator(5)),
 
     selected: types.optional(types.boolean, false),
