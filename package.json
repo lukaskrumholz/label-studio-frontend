@@ -2,10 +2,10 @@
   "name": "label-studio",
   "version": "0.6.0",
   "description": "Data Labeling Tool that is backend agnostic and can be embedded into your applications",
-  "homepage": "https://labelstud.io",
+  "homepage": "https://luminovo.ai",
   "author": {
-    "name": "Heartex Labs",
-    "url": "https://github.com/heartexlabs"
+    "name": "Luminovo",
+    "url": "https://luminovo.ai"
   },
   "license": "Apache-2.0",
   "repository": {
