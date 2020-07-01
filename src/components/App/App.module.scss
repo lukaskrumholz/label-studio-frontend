@@ -10,7 +10,8 @@
 }
 
 .editor {
-  min-width: 320px;
+  min-width: 100px;
+  max-width: 1300px;
   margin: 0 auto;
 
   @include respond("phone") {
@@ -26,11 +27,12 @@
   left: 0;
   width: 100%;
   padding: 2em;
+  z-index: 100;
 }
 
 .menu {
-  width: 320px;
-  min-width: 320px;
+  width: 260px;
+  min-width: 260px;
   display: flex;
   flex-flow: column;
 

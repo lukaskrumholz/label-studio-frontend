@@ -110,7 +110,6 @@ const App = inject("store")(
             <Settings store={store} />
             <Provider store={store}>
               <div>
-                {store.hasInterface("panel") && <Panel store={store} />}
 
                 {store.showingDescription && (
                   <Segment>
@@ -127,18 +126,19 @@ const App = inject("store")(
                   {!cs.viewingAllCompletions && !cs.viewingAllPredictions && (
                     <Segment className={settings.bottomSidePanel ? "" : styles.segment + " ls-segment"}>
                       {Tree.renderItem(root)}
-                      {store.hasInterface("controls") && <Controls item={cs.selected} />}
                     </Segment>
                   )}
                   {cs.viewingAllCompletions && this.renderAllCompletions()}
                   {cs.viewingAllPredictions && this.renderAllPredictions()}
 
                   <div className={stMenu + " ls-menu"}>
+                    {store.hasInterface("panel") && <Panel store={store} />}
                     {store.hasInterface("completions:menu") && <Completions store={store} />}
                     {store.hasInterface("predictions:menu") && <Predictions store={store} />}
                     {store.hasInterface("side-column") && !cs.viewingAllCompletions && !cs.viewingAllPredictions && (
                       <SideColumn store={store} />
                     )}
+                    {store.hasInterface("controls") && <Controls item={cs.selected} />}
                   </div>
                 </div>
               </div>

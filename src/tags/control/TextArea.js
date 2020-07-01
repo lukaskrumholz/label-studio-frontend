@@ -14,6 +14,7 @@ import { HtxTextAreaRegion, TextAreaRegionModel } from "../../regions/TextAreaRe
 import { guidGenerator } from "../../core/Helpers";
 import { cloneNode } from "../../core/Helpers";
 import ControlBase from "./Base";
+import { OmitProps } from "antd/lib/transfer/renderListBody";
 
 const { TextArea } = Input;
 
@@ -48,6 +49,7 @@ const TagAttrs = types.model({
   placeholder: types.maybeNull(types.string),
   maxsubmissions: types.maybeNull(types.string),
   editable: types.optional(types.boolean, false),
+  hotkey: types.maybeNull(types.string),
 });
 
 const Model = types
@@ -171,6 +173,39 @@ const Model = types
 
       text.forEach(t => self.addText(t, obj.id));
     },
+
+    onHotKey() {
+      console.log(self);
+      console.log(self._ref);
+      if (self._ref) {
+        self._ref.focus();
+      }
+      else {
+        const region = document.getElementsByClassName( self.name + "-completed")[0];
+        console.log(region);
+        if (region) region.querySelector(".ant-typography").click();
+      }
+
+      return false;
+    },
+
+    setInputRef(ref) {
+      self._ref = ref;
+    },
+
+    onKeyDown(e){
+      if (e.keyCode === 27){
+        self._value = "";
+        self._ref.blur();
+      } else if (e.ctrlKey && e.keyCode == 13) {
+        getRoot(self).submitCompletion();
+      } else if (e.altKey && e.keyCode == 13) {
+        getRoot(self).updateCompletion();
+      } else if (e.altKey && e.keyCode == 83) {
+        getRoot(self).settings.toggleFullscreen();
+      }
+    },
+
   }));
 
 const TextAreaModel = types.compose(
@@ -190,12 +225,18 @@ const HtxTextArea = observer(({ item }) => {
     name: item.name,
     value: item._value,
     rows: item.rows,
-    className: "is-search",
+    className: "is-search" + " " + item.name,
     label: item.label,
     placeholder: item.placeholder,
     onChange: ev => {
       const { value } = ev.target;
       item.setValue(value);
+    },
+    ref: ref => {
+      item.setInputRef(ref);
+    },
+    onKeyDown: ev => {
+      item.onKeyDown(ev);
     },
   };
 
@@ -240,7 +281,7 @@ const HtxTextArea = observer(({ item }) => {
       )}
 
       {item.regions.length > 0 && (
-        <div style={{ marginBottom: "1em" }}>
+        <div style={{ marginBottom: "1em" }} className={props.name + "-completed"}>
           {item.regions.map(t => (
             <HtxTextAreaRegion key={t.id} item={t} />
           ))}

@@ -9,13 +9,19 @@
 }
 
 .container {
-  margin-bottom: 10px;
+  display: inline-block;
+  margin-bottom: 5px;
+  margin-right: 5px;
+  margin-left: 0px;
 
   & > button {
-    margin: 0 10px;
+    margin-top: 0px;
+    margin-bottom: 10px;
+    margin-right: 10px;
 
     &:first-child {
-      margin-left: 0;
+      margin-left: 0px;
+      margin-bottom: 10px;
     }
 
     @include respond("phone") {
@@ -30,6 +36,7 @@
 
   &:last-child {
     margin-right: 0;
+    margin-top: 10px;
   }
 
   @include respond("phone") {
@@ -41,13 +48,14 @@
 }
 
 .block {
+  display: inline-block;
   clear: both;
 }
 
 .wrapper {
-  display: flex;
+  display: inline;
   justify-content: space-between;
-  align-items: center;
+  align-items: left;
   margin-top: 20px;
 
   @include respond("phone") {

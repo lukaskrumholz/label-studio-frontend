@@ -29,7 +29,7 @@ import ControlBase from "./Base";
  * @name Choices
  * @param {string} name                - name of the group
  * @param {string} toName              - name of the element that you want to label
- * @param {single|single-radio|multiple} [choice=single] - single or multi-class
+ * @param {single|single-radio|multiple|label} [choice=single] - single or multi-class
  * @param {boolean} [showInline=false] - show items in the same visual line
  * @param {boolean} [required=false]   - validation if choice has been selected
  * @param {string} [requiredMessage]   - message to show if validation fails
@@ -43,7 +43,7 @@ const TagAttrs = types.model({
   name: types.string,
   toname: types.maybeNull(types.string),
   showinline: types.optional(types.boolean, false),
-  choice: types.optional(types.enumeration(["single", "single-radio", "multiple"]), "single"),
+  choice: types.optional(types.enumeration(["single", "single-radio", "multiple", "label"]), "single"),
 });
 
 const Model = types
@@ -60,7 +60,7 @@ const Model = types
   })
   .views(self => ({
     get shouldBeUnselected() {
-      return self.choice === "single" || self.choice === "single-radio";
+      return self.choice === "single" || self.choice === "single-radio" || self.choice === "label";
     },
 
     get completion() {
@@ -89,7 +89,7 @@ const Model = types
   }))
   .actions(self => ({
     requiredModal() {
-      InfoModal.warning(self.requiredmessage || `Checkbox "${self.name}" is required.`);
+      InfoModal.warning("", self.requiredmessage || `Checkbox "${self.name}" is required.`);
     },
 
     copyState(choices) {

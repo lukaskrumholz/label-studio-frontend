@@ -25,7 +25,7 @@ export default inject("store")(
      */
     let taskInformation;
     if (store.task) {
-      taskInformation = <h4 className={styles.task + " ls-task-info"}>Task ID: {store.task.id}</h4>;
+      taskInformation = <h5 className={styles.task + " ls-task-info"}>Task ID: {store.task.id}</h5>;
     }
 
     /**
@@ -93,8 +93,8 @@ export default inject("store")(
             {skipButton}
             {updateButton}
             {submitButton}
+            {taskInformation}
           </div>
-          {taskInformation}
         </div>
       </div>
     );

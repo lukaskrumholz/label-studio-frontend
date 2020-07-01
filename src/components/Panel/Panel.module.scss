@@ -1,9 +1,9 @@
 @import "../../assets/styles/global.scss";
 
 .container {
-  display: flex;
+  display: inline;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
 
   @include respond("phone") {
     flex-direction: column;
@@ -11,17 +11,19 @@
 }
 
 .block {
+  display: inline-block;
   &__controls {
+    display: inline-block;
     @include respond("phone") {
       width: 100%;
     }
   }
 
   & > button {
-    margin: 0 5px;
+    margin: 5px 5px;
 
     &:first-child {
-      margin-left: 0;
+      margin-left: 5 px;
     }
 
     &:last-child {
@@ -34,4 +36,25 @@
       margin-bottom: 10px;
     }
   }
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  color: #1890ff;
+  font-weight: bold;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.titlespace {
+  justify-content: space-between;
+}
+
+.completioncard {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
 }

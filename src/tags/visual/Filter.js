@@ -21,6 +21,9 @@ const { Search } = Input;
  * @param {number} [size=4]           - size of filter
  * @param {string} [style]            - css style string
  * @param {boolean} [underline=false] - underline of filter
+ * @param {boolean} [autofocus=false] - autofocus the element
+ * @param {string} name               - name of the component
+ * @param {string} nextinput          - name of the next input component (for focus)
  */
 
 const TagAttrs = types.model({
@@ -31,6 +34,8 @@ const TagAttrs = types.model({
   placeholder: types.optional(types.string, "Quick Filter"),
   minlength: types.optional(types.string, "3"),
   hotkey: types.maybeNull(types.string),
+  autofocus: types.optional(types.boolean, false),
+  nextinput: types.optional(types.string, ""),
 });
 
 const Model = types
@@ -39,6 +44,7 @@ const Model = types
     _value: types.maybeNull(types.string),
     name: types.maybeNull(types.string),
     toname: types.maybeNull(types.string),
+    nextinput: types.maybeNull(types.string),
   })
   .views(self => ({
     get completion() {
@@ -75,6 +81,8 @@ const Model = types
       self._value = value;
 
       self.applyFilter();
+      self.toTag.unselectAll();
+      if (self._value) self.toTag.selectFirstVisible();
     },
 
     onHotKey() {
@@ -90,11 +98,38 @@ const Model = types
     },
 
     selectFirstElement() {
-      const selected = self.toTag.selectFirstVisible();
-      if (selected && self.cleanup) {
+      if (self._value) {
+        self.toTag.selectFirstVisible();
+        const selected = self.toTag.selectFirstVisible();
+        if (selected && self.cleanup) {
+          self._value = "";
+          self.applyFilter();
+          self.focusNextInput();
+        }
+      }
+    },
+
+    focusNextInput() {
+      console.log("HI");
+      console.log(self.nextinput);
+      if (self.nextinput){
+        document.getElementsByClassName(self.nextinput)[0].focus()
+      }
+    },
+
+    onKeyDown(e){
+      if (e.keyCode === 27){
         self._value = "";
         self.applyFilter();
+        self._ref.blur();
+      } else if (e.ctrlKey && e.keyCode == 13) {
+        getRoot(self).submitCompletion();
+      } else if (e.altKey && e.keyCode == 13) {
+        getRoot(self).updateCompletion();
+      } else if (e.altKey && e.keyCode == 83) {
+        getRoot(self).settings.toggleFullscreen();
       }
+
     },
   }));
 
@@ -116,6 +151,9 @@ const HtxFilter = observer(({ item }) => {
       onChange={item.applyFilterEv}
       onPressEnter={item.selectFirstElement}
       placeholder={item.placeholder}
+      autoFocus={item.autofocus}
+      onKeyDown={item.onKeyDown}
+      className={item.name}
     />
   );
 });

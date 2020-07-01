@@ -80,6 +80,7 @@ body {
 }
 
 #ls-container {
+  max-height: 100%;
   margin-left: 3em;
   margin-right: 3em;
 }

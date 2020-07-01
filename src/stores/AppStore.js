@@ -192,9 +192,16 @@ export default types
         const { history } = self.completionStore.selected;
         history && history.canUndo && history.undo();
       });
+      Hotkey.addKey("ctrl+y", function() {
+        const { history } = self.completionStore.selected;
+        history && history.canRedo && history.redo();
+      });
+      Hotkey.addKey("alt+s", function() {
+        self.settings.toggleFullscreen();
+      });
 
       Hotkey.addKey(
-        "escape",
+        "ctrl+escape",
         function() {
           const c = self.completionStore.selected;
           if (c && c.relationMode) {
@@ -209,7 +216,11 @@ export default types
         function() {
           const c = self.completionStore.selected;
           if (c && c.highlightedNode) {
+            const inputName = c.highlightedNode.parent.name;
+            console.log(inputName);
             c.highlightedNode.deleteRegion();
+            const input = document.getElementsByClassName(inputName)[0];
+            input.focus();
           }
         },
         "Delete selected region",

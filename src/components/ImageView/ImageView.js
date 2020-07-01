@@ -122,7 +122,7 @@ export default observer(
           y: stage.getPointerPosition().y / oldScale - stage.y() / oldScale,
         };
 
-        newScale = e.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+        newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
 
         newPos = {
           x: -(mousePointTo.x - stage.getPointerPosition().x / newScale) * newScale,
