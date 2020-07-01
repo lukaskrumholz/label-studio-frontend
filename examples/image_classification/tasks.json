@@ -1,0 +1,14 @@
+[
+    {
+        "data": {
+            "image": "https://htx-misc.s3.amazonaws.com/opensource/label-studio/examples/images/nick-owuor-astro-nic-visuals-wDifg5xc9Z4-unsplash.jpg",
+            "pdf": "https://raw.githubusercontent.com/lukaskrumholz/label-studio/master/example_images/application_1.pdf#page=2"
+        }
+    },
+    {
+        "data": {
+            "image": "https://miro.medium.com/max/1400/1*mk1-6aYaf_Bes1E3Imhc0A.jpeg",
+            "pdf": "https://raw.githubusercontent.com/lukaskrumholz/label-studio/master/example_images/application_1.pdf#page=2"
+        }
+    }
+]
