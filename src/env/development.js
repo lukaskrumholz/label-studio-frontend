@@ -27,6 +27,7 @@ import { ImageMultilabel } from "../examples/image_multilabel"; // eslint-disabl
 import { ImageEllipselabels } from "../examples/image_ellipses"; // eslint-disable-line no-unused-vars
 import { ImagePolygons } from "../examples/image_polygons"; // eslint-disable-line no-unused-vars
 import { ImageSegmentation } from "../examples/image_segmentation"; // eslint-disable-line no-unused-vars
+import { ImageClassification } from "../examples/image_classification"; // eslint-disable-line no-unused-vars
 
 /**
  * HTML
@@ -43,7 +44,7 @@ import { Pairwise } from "../examples/pairwise"; // eslint-disable-line no-unuse
  */
 // import { AllTypes } from "../examples/all_types"; // eslint-disable-line no-unused-vars
 
-const data = NamedEntity;
+const data = ImageClassification;
 
 /**
  * Get current config
